@@ -2,14 +2,17 @@ use std::fs;
 use std::io::{prelude::*, BufReader};
 use std::net::{TcpListener, TcpStream};
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration};
+
+use webserver::ThreadPool;
 
 fn main() {
     let listener = TcpListener::bind("localhost:7878").unwrap();
+    let pool = ThreadPool::new(10);
 
     for stream in listener.incoming() {
         let s = stream.unwrap();
-        thread::spawn(|| handle_connection(s));
+        pool.execute(|| handle_connection(s))
     }
 }
 
@@ -19,7 +22,7 @@ fn handle_connection(mut stream: TcpStream) {
 
     let (status_line, filename) = match &request_first_line[..] {
         "GET / HTTP/1.1" => {
-            thread::sleep(Duration::from_secs(5));
+            // thread::sleep(Duration::from_secs(2));
             ("HTTP/1.1 200 ok", "hello.html")
         }
         _ => ("HTTP/1.1 404 NOT FOUND", "404.html"),
